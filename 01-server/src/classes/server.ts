@@ -1,16 +1,49 @@
 import { SERVER_PORT } from "./../global/environtment";
 import express from "express";
+import http from "http";
+import socket from "socket.io";
+import * as wSocket from "../sockets/socket";
 
 export default class Server {
+  private static _instance: Server;
+
   public app: express.Application;
   public port: number;
+  private httpServer: http.Server;
+  public io: socket.Server;
+  public options: any;
 
-  constructor() {
+  private constructor() {
+    this.options = {
+      cors: {
+        origin: "http://localhost:4200",
+      },
+    };
     this.app = express();
     this.port = SERVER_PORT;
+    this.httpServer = http.createServer(this.app);
+    this.io = new socket.Server(this.httpServer, this.options);
+
+    this.listenSockets();
+  }
+
+  public static get instance() {
+    return this._instance || (this._instance = new this());
+  }
+
+  listenSockets() {
+    console.log("Socket is up and running");
+    this.io.on("connection", (client) => {
+      console.log(`Client with id ${client.id} is connected`);
+
+      // On message
+      wSocket.onMesssage(client, this.io);
+      // On Disconnected Client
+      wSocket.onDisconnect(client);
+    });
   }
 
   start(callback: Function): void {
-    this.app.listen(this.port, callback());
+    this.httpServer.listen(this.port, callback());
   }
 }
