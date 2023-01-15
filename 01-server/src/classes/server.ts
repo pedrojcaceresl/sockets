@@ -34,12 +34,19 @@ export default class Server {
   listenSockets() {
     console.log("Socket is up and running");
     this.io.on("connection", (client) => {
-      console.log(`Client with id ${client.id} is connected`);
+      // Connect client
+      wSocket.connectClient(client);
+
+      // On login
+      wSocket.onSetUser(client);
 
       // On message
       wSocket.onMesssage(client, this.io);
+
       // On Disconnected Client
       wSocket.onDisconnect(client);
+      // Disconnect user
+      // wSocket.disconnectClient(client);
     });
   }
 
