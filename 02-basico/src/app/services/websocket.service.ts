@@ -1,3 +1,4 @@
+import { Usuario } from './../classes/usuario';
 import { Socket } from 'ngx-socket-io';
 import { Injectable } from '@angular/core';
 
@@ -6,8 +7,10 @@ import { Injectable } from '@angular/core';
 })
 export class WebsocketService {
   public socketStatus = false;
+  public usuario!: Usuario;
 
   constructor(private socket: Socket) {
+    this.cargarStorage();
     this.checkStatus();
   }
 
@@ -29,5 +32,29 @@ export class WebsocketService {
 
   listen(event: string) {
     return this.socket.fromEvent(event);
+  }
+
+  loginWS(nombre: string) {
+    return new Promise<void>((resolve, reject) => {
+      this.emit('config-user', { nombre }, (resp: any) => {
+        this.usuario = new Usuario(nombre);
+        this.guardarStorage();
+        resolve();
+      });
+    });
+  }
+
+  getUsuario() {
+    return this.usuario;
+  }
+  guardarStorage() {
+    localStorage.setItem('usuario', JSON.stringify(this.usuario));
+  }
+
+  cargarStorage() {
+    if (localStorage.getItem('usuario')) {
+      this.usuario = JSON.parse(localStorage.getItem('usuario') || '');
+      this.loginWS(this.usuario.nombre);
+    }
   }
 }
