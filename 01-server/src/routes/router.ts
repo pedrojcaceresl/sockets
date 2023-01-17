@@ -1,3 +1,5 @@
+import { connectedUsers } from "./../sockets/socket";
+import { Socket } from "socket.io/dist/socket";
 import { Router, Request, Response } from "express";
 import Server from "../classes/server";
 
@@ -44,6 +46,42 @@ router.post("/mensajes/:id", (req: Request, res: Response) => {
     body,
     from,
     id,
+  });
+});
+
+// Service to get all user Ids
+
+router.get("/usuarios", (req: Request, res: Response) => {
+  let clients: any[] = [];
+  server.io
+    .fetchSockets()
+    .then((sockets) => {
+      sockets.map((client) => {
+        clients.push(client.id);
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+      if (err) {
+        return res.json({
+          ok: false,
+        });
+      }
+    })
+    .finally(() => {
+      return res.json({
+        ok: true,
+        clients,
+      });
+    });
+});
+
+// Get users and their names
+
+router.get("/usuarios/detalle", (req: Request, res: Response) => {
+  res.json({
+    ok: true,
+    clients: connectedUsers.getLista(),
   });
 });
 

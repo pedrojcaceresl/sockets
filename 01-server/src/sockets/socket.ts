@@ -5,15 +5,17 @@ import socket from "socket.io";
 
 export const connectedUsers = new UsuariosLista();
 
-export const connectClient = (client: Socket) => {
+export const connectClient = (client: Socket, io: socket.Server) => {
   const user = new Usuario(client.id);
   connectedUsers.agregar(user);
 };
 
-export const onDisconnect = (client: Socket) => {
+export const onDisconnect = (client: Socket, io: socket.Server) => {
   client.on("disconnect", () => {
     console.log(`Client with id ${client.id} is disconnected.`);
     connectedUsers.borrarUsuario(client.id);
+
+    io.emit("active-users", connectedUsers.getLista());
   });
 };
 
@@ -24,7 +26,7 @@ export const onMesssage = (client: Socket, io: socket.Server) => {
   });
 };
 
-export const onSetUser = (client: Socket, io?: socket.Server) => {
+export const onSetUser = (client: Socket, io: socket.Server) => {
   client.on(
     "config-user",
     (payload: { nombre: string }, callback: Function) => {
@@ -34,6 +36,16 @@ export const onSetUser = (client: Socket, io?: socket.Server) => {
         ok: true,
         mensaje: `User ${payload.nombre} has been set`,
       });
+      io.emit("active-users", connectedUsers.getLista());
     }
   );
+};
+
+// Get Users
+
+export const getUsers = (client: Socket, io: socket.Server) => {
+  client.on("get-users", () => {
+    console.log("Get users event fired");
+    io.to(client.id).emit("active-users", connectedUsers.getLista());
+  });
 };
